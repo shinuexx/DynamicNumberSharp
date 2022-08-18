@@ -4,7 +4,7 @@
 namespace ShInUeXx.Numerics
 {
     [CLSCompliant(true)]
-    public class Number //: IComparable<Number>, IEquatable<Number>, IComparable
+    public class Number : IComparable<Number>, IEquatable<Number>, IComparable
     {
         public static Number Zero { get; } = new();
         public static Number One { get; } = new(BigInteger.One);
@@ -127,7 +127,7 @@ namespace ShInUeXx.Numerics
         };
 
         public override string ToString() => string.Format("{0}({1})", Variant, _value);
-        public override int GetHashCode() => HashCode.Combine(_value.GetType(), _value);
+        public override int GetHashCode() => HashCode.Combine(Variant, _value);
 
         public static implicit operator Number(int i) => new((BigInteger)i);
         [CLSCompliant(false)]
@@ -341,5 +341,80 @@ namespace ShInUeXx.Numerics
             NumberVariant.Complex => Complex.Reciprocal(value.ComplexValue),
             _ => throw new InvalidOperationException(),
         };
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not Number n) return false;
+            else return Equals(n);
+        }
+
+        public bool Equals(Number? other)
+        {
+            if (other is null) return false;
+            else return other.Variant == Variant && (_value.Equals(other._value));
+        }
+
+        public int CompareTo(object? obj)
+        {
+            if (obj is null) return 1;
+            else if (obj is not Number n) throw new ArgumentException(nameof(obj));
+            else return CompareTo(n);
+        }
+
+        public int CompareTo(Number? other)
+        {
+            if(other is null) return 1;
+            if (IsComplex || other.IsComplex)
+            {
+                throw new ArgumentException(nameof(other));
+            }
+            else if (IsFloating || other.IsFloating)
+            {
+                return ToDouble().CompareTo(other.ToDouble());
+            }
+            else if (IsRational || other.IsRational)
+            {
+                return ToRational().CompareTo(other.ToRational());
+            }
+            else
+            {
+                return IntegerValue.CompareTo(other.IntegerValue);
+            }
+        }
+
+        public static bool operator ==(Number left, Number right)
+        {
+            if (left is null)
+            {
+                return right is null;
+            }
+
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Number left, Number right)
+        {
+            return !(left == right);
+        }
+
+        public static bool operator <(Number left, Number right)
+        {
+            return left is null ? right is not null : left.CompareTo(right) < 0;
+        }
+
+        public static bool operator <=(Number left, Number right)
+        {
+            return left is null || left.CompareTo(right) <= 0;
+        }
+
+        public static bool operator >(Number left, Number right)
+        {
+            return left is not null && left.CompareTo(right) > 0;
+        }
+
+        public static bool operator >=(Number left, Number right)
+        {
+            return left is null ? right is null : left.CompareTo(right) >= 0;
+        }
     }
 }
